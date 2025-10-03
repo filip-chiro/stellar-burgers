@@ -38,6 +38,7 @@ export const DefaultIngredient: Story = {
       image_large: '',
       image_mobile: ''
     },
+    index: 0,
     count: 2,
     locationState: {
       background: {
