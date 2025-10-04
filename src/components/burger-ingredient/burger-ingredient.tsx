@@ -1,27 +1,26 @@
-import { FC, memo } from 'react';
+import { FC, memo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAppDispatch } from '../../services/store';
+import { useDispatch } from '../../services/store';
+import { constructorActions } from '../../services/slices/constructor';
 
 import { BurgerIngredientUI } from '@ui';
 import { TBurgerIngredientProps } from './type';
-import { addIngredient } from '../../services/slices/stellarBurgerSlice';
 
 export const BurgerIngredient: FC<TBurgerIngredientProps> = memo(
-  ({ ingredient, count, index }: any) => {
+  ({ ingredient, count }) => {
+    const dispatch = useDispatch();
     const location = useLocation();
-    const dispatch = useAppDispatch();
 
-    const handleAdd = () => {
-      dispatch(addIngredient(ingredient));
-    };
+    const onAdd = useCallback(() => {
+      dispatch(constructorActions.addIngredient(ingredient));
+    }, [dispatch, ingredient]);
 
     return (
       <BurgerIngredientUI
         ingredient={ingredient}
         count={count}
         locationState={{ background: location }}
-        handleAdd={handleAdd}
-        index={index}
+        handleAdd={onAdd}
       />
     );
   }

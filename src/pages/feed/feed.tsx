@@ -2,33 +2,30 @@ import { Preloader } from '@ui';
 import { FeedUI } from '@ui-pages';
 import { TOrder } from '@utils-types';
 import { FC, useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../services/store';
-import {
-  selectOrders,
-  fetchFeed,
-  removeOrders,
-  fetchIngredients
-} from '../../services/slices/stellarBurgerSlice';
+import { useDispatch, useSelector } from '../../services/store';
+import { feedSelectors } from '../../services/slices/feed';
+import { getFeedThunk } from '../../services/thunk/feed';
 
 export const Feed: FC = () => {
-  const orders: TOrder[] = useAppSelector(selectOrders);
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch();
+  const orders: TOrder[] = useSelector(feedSelectors.getFeedOrders);
+  const feedIsLoading = useSelector(feedSelectors.getFeedIsLoading);
+
+  const handleGetFeeds = () => {
+    dispatch(getFeedThunk());
+  };
 
   useEffect(() => {
-    Promise.all([dispatch(fetchIngredients()), dispatch(fetchFeed())]);
-  }, []);
+    dispatch(getFeedThunk());
+  }, [dispatch]);
 
   if (!orders.length) {
     return <Preloader />;
   }
 
-  return (
-    <FeedUI
-      orders={orders}
-      handleGetFeeds={() => {
-        dispatch(removeOrders());
-        dispatch(fetchFeed());
-      }}
-    />
+  return feedIsLoading ? (
+    <Preloader />
+  ) : (
+    <FeedUI orders={orders} handleGetFeeds={handleGetFeeds} />
   );
 };

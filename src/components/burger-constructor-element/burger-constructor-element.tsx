@@ -1,37 +1,42 @@
-import { FC, memo } from 'react';
+import { FC, memo, useCallback } from 'react';
+import { useDispatch } from '../../services/store';
+import { constructorActions } from '../../services/slices/constructor';
 import { BurgerConstructorElementUI } from '@ui';
 import { BurgerConstructorElementProps } from './type';
-import { useAppDispatch } from '../../services/store';
-import {
-  moveIngredientDown,
-  moveIngredientUp,
-  deleteIngredient
-} from '../../services/slices/stellarBurgerSlice';
 
 export const BurgerConstructorElement: FC<BurgerConstructorElementProps> = memo(
-  ({ ingredient, index, totalItems }: any) => {
-    const dispatch = useAppDispatch();
+  ({ ingredient, index, totalItems }) => {
+    const dispatch = useDispatch();
 
-    const handleMoveDown = () => {
-      dispatch(moveIngredientDown(ingredient));
-    };
+    const moveIngredient = useCallback(
+      (toIndex: number) => {
+        dispatch(
+          constructorActions.moveIngredient({ fromIndex: index, toIndex })
+        );
+      },
+      [dispatch, index]
+    );
 
-    const handleMoveUp = () => {
-      dispatch(moveIngredientUp(ingredient));
-    };
+    const onMoveUp = useCallback(() => {
+      if (index > 0) moveIngredient(index - 1);
+    }, [index, moveIngredient]);
 
-    const handleClose = () => {
-      dispatch(deleteIngredient(ingredient));
-    };
+    const onMoveDown = useCallback(() => {
+      if (index < totalItems - 1) moveIngredient(index + 1);
+    }, [index, totalItems, moveIngredient]);
+
+    const onRemove = useCallback(() => {
+      dispatch(constructorActions.removeIngredient(ingredient.id));
+    }, [dispatch, ingredient.id]);
 
     return (
       <BurgerConstructorElementUI
         ingredient={ingredient}
         index={index}
         totalItems={totalItems}
-        handleMoveUp={handleMoveUp}
-        handleMoveDown={handleMoveDown}
-        handleClose={handleClose}
+        handleMoveUp={onMoveUp}
+        handleMoveDown={onMoveDown}
+        handleClose={onRemove}
       />
     );
   }

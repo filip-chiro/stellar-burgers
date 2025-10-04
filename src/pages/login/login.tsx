@@ -1,61 +1,29 @@
-import { FC, SyntheticEvent, useEffect } from 'react';
+import { FC, SyntheticEvent, useState } from 'react';
 import { LoginUI } from '@ui-pages';
-import { useAppDispatch, useAppSelector } from '../../services/store';
-import { useForm } from '../../hooks/useForm';
-import {
-  selectErrorText,
-  removeErrorText,
-  fetchLoginUser,
-  selectLoading
-} from '../../services/slices/stellarBurgerSlice';
-import { Preloader } from '@ui';
-import { setCookie } from '../../utils/cookie';
+import { useDispatch } from '../../services/store';
+import { loginUserThunk } from '../../services/thunk/user';
 
 export const Login: FC = () => {
-  const dispatch = useAppDispatch();
-  const { values, handleChange } = useForm({
-    email: '',
-    password: ''
-  });
-  const error = useAppSelector(selectErrorText);
-  const isLoading = useAppSelector(selectLoading);
-
-  useEffect(() => {
-    dispatch(removeErrorText());
-  }, []);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const dispatch = useDispatch();
 
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
-    dispatch(removeErrorText());
-    dispatch(fetchLoginUser(values))
+    dispatch(loginUserThunk({ email, password }))
       .unwrap()
-      .then((payload) => {
-        setCookie('accessToken', payload.accessToken);
-        localStorage.setItem('refreshToken', payload.refreshToken);
-      });
+      .catch((error) =>
+        console.log('Ошибка при авторизации: ', error?.message)
+      );
   };
-
-  if (isLoading) {
-    return <Preloader />;
-  }
 
   return (
     <LoginUI
-      errorText={error}
-      email={values.email}
-      setEmail={(val) => {
-        const value = typeof val === 'string' ? val : val(values.email);
-        handleChange({
-          target: { name: 'email', value }
-        } as React.ChangeEvent<HTMLInputElement>);
-      }}
-      password={values.password}
-      setPassword={(val) => {
-        const value = typeof val === 'string' ? val : val(values.password);
-        handleChange({
-          target: { name: 'password', value }
-        } as React.ChangeEvent<HTMLInputElement>);
-      }}
+      errorText=''
+      email={email}
+      setEmail={setEmail}
+      password={password}
+      setPassword={setPassword}
       handleSubmit={handleSubmit}
     />
   );

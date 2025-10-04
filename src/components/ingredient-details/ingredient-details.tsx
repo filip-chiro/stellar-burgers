@@ -1,29 +1,20 @@
-import { FC, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { FC } from 'react';
 import { useParams } from 'react-router-dom';
-import { IngredientDetailsUI } from '../ui/ingredient-details';
+import { useSelector } from '../../services/store';
+import { ingredientsSelectors } from '../../services/slices/ingredients';
+
 import { Preloader } from '../ui/preloader';
-import { selectIngredients } from '../../services/slices/stellarBurgerSlice';
-import { useAppSelector } from '../../services/store';
+import { IngredientDetailsUI } from '../ui/ingredient-details';
 
 export const IngredientDetails: FC = () => {
-  const navigate = useNavigate();
-  const params = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
+  const ingredients = useSelector(ingredientsSelectors.getIngredients);
 
-  useEffect(() => {
-    if (!params.id) {
-      navigate('/', { replace: true });
-    }
-  }, []);
+  const ingredient = ingredients.find((item) => item._id === id);
 
-  const ingredients: any = useAppSelector(selectIngredients);
-  const ingredientData = ingredients.find(
-    (item: { _id: string | undefined }) => item._id === params.id
-  );
-
-  if (!ingredientData) {
+  if (!ingredient) {
     return <Preloader />;
   }
 
-  return <IngredientDetailsUI ingredientData={ingredientData} />;
+  return <IngredientDetailsUI ingredientData={ingredient} />;
 };

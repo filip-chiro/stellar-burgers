@@ -1,10 +1,3 @@
-export type TConstructorItems = {
-  bun: Partial<TIngredient>;
-  ingredients: TIngredientUnique[];
-};
-
-export type TIngredientUnique = TIngredient & { uniqueId: string };
-
 export type TIngredient = {
   _id: string;
   name: string;
@@ -20,7 +13,7 @@ export type TIngredient = {
 };
 
 export type TConstructorIngredient = TIngredient & {
-  uniqueId: string;
+  id: string;
 };
 
 export type TOrder = {

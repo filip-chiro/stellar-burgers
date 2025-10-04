@@ -1,187 +1,141 @@
-import { useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
-import '../../index.css';
-import styles from './app.module.css';
 import {
   ConstructorPage,
   Feed,
-  NotFound404,
-  Login,
-  Register,
   ForgotPassword,
-  ResetPassword,
+  Login,
+  NotFound404,
   Profile,
-  ProfileOrders
+  ProfileOrders,
+  Register,
+  ResetPassword
 } from '@pages';
-import { deleteCookie, getCookie } from '../../utils/cookie';
-import { useAppDispatch, useAppSelector } from '../../services/store';
-import { AppHeader } from '../app-header';
-import { IngredientDetails } from '../ingredient-details';
-import { Modal } from '../modal';
-import { OrderInfo } from '../order-info';
+import '../../index.css';
+import styles from './app.module.css';
+
+import { IngredientDetails, Modal, OrderInfo } from '@components';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { Layout } from '../layout';
+import { useSelector } from '../../services/store';
+import { orderSelectors } from '../../services/slices/order';
 import { ProtectedRoute } from '../protected-route';
-import {
-  selectIsModalOpened,
-  selectIsAuthenticated,
-  selectIngredients,
-  selectOrders,
-  getUserThunk,
-  init,
-  fetchIngredients,
-  fetchFeed,
-  closeModal
-} from '../../services/slices/stellarBurgerSlice';
 
-export const App = () => {
-  const dispatch = useAppDispatch();
+const App = () => {
   const location = useLocation();
-  const backgroundLocation = location.state?.background;
-  const isModalOpened = useAppSelector(selectIsModalOpened);
-  const token = getCookie('accessToken');
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
-  const ingredients = useAppSelector(selectIngredients);
-  const feed = useAppSelector(selectOrders);
+  const background = location.state?.background;
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!isAuthenticated && token) {
-      dispatch(getUserThunk())
-        .unwrap()
-        .then(() => {
-          dispatch(init());
-        })
-        .catch((e) => {
-          deleteCookie('accessToken');
-          localStorage.removeItem('refreshToken');
-        });
-    } else {
-      dispatch(init());
-    }
-  }, []);
+  const orderInfo = useSelector(orderSelectors.getOrderByNumber);
+  const orderNumber: string = orderInfo
+    ? `#${String(orderInfo?.number).padStart(6, '0')}`
+    : '';
 
-  useEffect(() => {
-    if (!ingredients.length) {
-      dispatch(fetchIngredients());
+  const handleModalClose = () => {
+    if (background) {
+      navigate(-1);
     }
-  }, []);
-
-  useEffect(() => {
-    if (!feed.length) {
-      dispatch(fetchFeed());
-    }
-  }, []);
+  };
 
   return (
-    <div className={styles.app}>
-      <AppHeader />
-      <Routes location={backgroundLocation || location}>
-        <Route path='*' element={<NotFound404 />} />
-        <Route path='/' element={<ConstructorPage />} />
-        <Route path='/feed' element={<Feed />} />
-        <Route
-          path='/login'
-          element={
-            <ProtectedRoute unAuthOnly>
-              <Login />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/register'
-          element={
-            <ProtectedRoute unAuthOnly>
-              <Register />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/forgot-password'
-          element={
-            <ProtectedRoute unAuthOnly>
-              <ForgotPassword />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/reset-password'
-          element={
-            <ProtectedRoute unAuthOnly>
-              <ResetPassword />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/profile'
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/profile/orders'
-          element={
-            <ProtectedRoute>
-              <ProfileOrders />
-            </ProtectedRoute>
-          }
-        />
-        <Route path='/feed/:number' element={<OrderInfo />} />
-        <Route path='/ingredients/:id' element={<IngredientDetails />} />
-        <Route
-          path='/profile/orders/:number'
-          element={
-            <ProtectedRoute>
-              <OrderInfo />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-
-      {isModalOpened && backgroundLocation && (
-        <Routes>
-          <Route
-            path='/ingredients/:id'
-            element={
-              <Modal
-                title={'Описание ингредиента'}
-                onClose={() => {
-                  dispatch(closeModal());
-                }}
-              >
-                <IngredientDetails />
-              </Modal>
-            }
-          />
-          <Route
-            path='/profile/orders/:number'
-            element={
-              <ProtectedRoute>
-                <Modal
-                  title={'Заказ'}
-                  onClose={() => {
-                    dispatch(closeModal());
-                  }}
-                >
+    <>
+      <div className={styles.app}>
+        <Routes location={background || location}>
+          <Route path='/' element={<Layout />}>
+            <Route index element={<ConstructorPage />} />
+            <Route path='/feed' element={<Feed />} />
+            <Route
+              path='/login'
+              element={
+                <ProtectedRoute onlyUnAuth>
+                  <Login />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/register'
+              element={
+                <ProtectedRoute onlyUnAuth>
+                  <Register />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/forgot-password'
+              element={
+                <ProtectedRoute onlyUnAuth>
+                  <ForgotPassword />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/reset-password'
+              element={
+                <ProtectedRoute onlyUnAuth>
+                  <ResetPassword />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/profile'
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/profile/orders'
+              element={
+                <ProtectedRoute>
+                  <ProfileOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route path='/ingredients/:id' element={<IngredientDetails />} />
+            <Route
+              path='/profile/orders/:number'
+              element={
+                <ProtectedRoute>
+                  <OrderInfo />
+                </ProtectedRoute>
+              }
+            />
+            <Route path='/feed/:number' element={<OrderInfo />} />
+            <Route path='*' element={<NotFound404 />} />
+          </Route>
+        </Routes>
+        {background && (
+          <Routes>
+            <Route
+              path='/feed/:number'
+              element={
+                <Modal title={orderNumber} onClose={handleModalClose}>
                   <OrderInfo />
                 </Modal>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/feed/:number'
-            element={
-              <Modal
-                title={'Заказ'}
-                onClose={() => {
-                  dispatch(closeModal());
-                }}
-              >
-                <OrderInfo />
-              </Modal>
-            }
-          />
-        </Routes>
-      )}
-    </div>
+              }
+            />
+            <Route
+              path='/ingredients/:id'
+              element={
+                <Modal title='Детали ингредиента' onClose={handleModalClose}>
+                  <IngredientDetails />
+                </Modal>
+              }
+            />
+            <Route
+              path='/profile/orders/:number'
+              element={
+                <ProtectedRoute>
+                  <Modal title={orderNumber} onClose={handleModalClose}>
+                    <OrderInfo />
+                  </Modal>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        )}
+      </div>
+    </>
   );
 };
+
+export default App;

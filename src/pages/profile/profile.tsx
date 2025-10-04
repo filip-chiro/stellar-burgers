@@ -1,21 +1,18 @@
 import { ProfileUI } from '@ui-pages';
 import { FC, SyntheticEvent, useEffect, useState } from 'react';
-import {
-  fetchUpdateUser,
-  selectLoading,
-  selectUser
-} from '../../services/slices/stellarBurgerSlice';
+import { userSelectors } from '../../services/slices/user';
+import { useDispatch, useSelector } from '../../services/store';
+import { updateUserThunk } from '../../services/thunk/user';
 import { Preloader } from '@ui';
-import { useAppSelector, useAppDispatch } from '../../services/store';
 
 export const Profile: FC = () => {
-  const dispatch = useAppDispatch();
-  const user = useAppSelector(selectUser);
-  const isLoading = useAppSelector(selectLoading);
+  const user = useSelector(userSelectors.getUserData);
+  const userIsLoading = useSelector(userSelectors.getIsLoading);
+  const dispatch = useDispatch();
 
   const [formValue, setFormValue] = useState({
-    name: user.name,
-    email: user.email,
+    name: user?.name || '',
+    email: user?.email || '',
     password: ''
   });
 
@@ -34,14 +31,26 @@ export const Profile: FC = () => {
 
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
-    dispatch(fetchUpdateUser(formValue));
+    const updatedData: { name: string; email: string; password?: string } = {
+      name: formValue.name,
+      email: formValue.email,
+      password: formValue.password !== '' ? formValue.password : undefined
+    };
+    dispatch(updateUserThunk(updatedData))
+      .unwrap()
+      .catch((error) => console.log('Ошибка при изменении данных: ', error));
+    setFormValue({
+      name: user?.name || '',
+      email: user?.email || '',
+      password: ''
+    });
   };
 
   const handleCancel = (e: SyntheticEvent) => {
     e.preventDefault();
     setFormValue({
-      name: user.name,
-      email: user.email,
+      name: user?.name || '',
+      email: user?.email || '',
       password: ''
     });
   };
@@ -53,11 +62,9 @@ export const Profile: FC = () => {
     }));
   };
 
-  if (isLoading) {
-    return <Preloader />;
-  }
-
-  return (
+  return userIsLoading ? (
+    <Preloader />
+  ) : (
     <ProfileUI
       formValue={formValue}
       isFormChanged={isFormChanged}
